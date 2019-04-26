@@ -1,0 +1,48 @@
+sort 
+	Colour = struct red | yellow | green;
+
+map
+	nextColour: Colour -> Colour;
+
+eqn
+	nextColour(red) = green;
+	nextColour(green) = yellow;
+	nextColour(yellow) = red;
+
+sort
+	CardinalDirection = struct north | east | south | west;
+
+% map
+%	currentColour: CardinalDirection -> Colour;
+
+
+act
+	show : CardinalDirection # Colour;
+	observe : CardinalDirection # Colour;
+	colourSeen : CardinalDirection # Colour;
+	crossingUnsafe : Colour # Colour # Colour # Colour;
+	
+proc
+	TrafficLight(direction : CardinalDirection, color : Colour) = 
+		show(direction, color) . TrafficLight(direction, nextColour(color))
+	;
+
+	Monitor = 
+		sum d : CardinalDirection . sum c : Colour . observe(d, c) . Monitor
+			
+		%Monitor +
+		% sum d : CardinalDirection . sum c : Colour . (c == yellow || c == green) -> (d == north && d == south || d == west && d == east) -> crossingUnsafe(c, c, c, c) . Monitor
+ 	;
+
+	System =
+		block({ 
+			show, observe
+		}, 	 
+		comm({
+			show | observe -> colourSeen
+		},
+			TrafficLight(north, red) || TrafficLight(east , red) || TrafficLight(south , red) || TrafficLight(west , red) || Monitor
+		));
+
+init
+	System;
